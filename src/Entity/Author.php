@@ -2,12 +2,42 @@
 
 namespace App\Entity;
 
-use App\Repository\AuthorRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\AuthorRepository;
 use JMS\Serializer\Annotation\Groups;
+use Doctrine\Common\Collections\Collection;
+use Hateoas\Configuration\Annotation as Hateoas;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+* @Hateoas\Relation(
+* "self",
+* href = @Hateoas\Route("detailAuthor",parameters = 
+* { "id" = "expr(object.getId())" }),
+* exclusion = @Hateoas\Exclusion(groups="getBooks")
+* )
+* @Hateoas\Relation(
+* "delete",
+* href = @Hateoas\Route(
+* "deleteAuthor",
+* parameters = { "id" = "expr(object.getId())" },
+* ),
+* exclusion = @Hateoas\Exclusion(groups="getBooks", excludeIf
+* = "expr(not is_granted('ROLE_ADMIN'))"),
+* )
+*
+* @Hateoas\Relation(
+* "update",
+* href = @Hateoas\Route(
+* "updateAuthor",
+* parameters = { "id" = "expr(object.getId())" },
+* ),
+* exclusion = @Hateoas\Exclusion(groups="getBooks", excludeIf
+* = "expr(not is_granted('ROLE_ADMIN'))"),
+* )
+**/
 
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
 class Author
