@@ -3,33 +3,63 @@
 namespace App\Entity;
 
 use App\Repository\BookRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
+use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
+
+/**
+* @Hateoas\Relation(
+* "self",
+* href = @Hateoas\Route("detailBook",parameters = 
+* { "id" = "expr(object.getId())" }),
+* exclusion = @Hateoas\Exclusion(groups="getBooks")
+* )
+* @Hateoas\Relation(
+* "delete",
+* href = @Hateoas\Route(
+* "deleteBook",
+* parameters = { "id" = "expr(object.getId())" },
+* ),
+* exclusion = @Hateoas\Exclusion(groups="getBooks", excludeIf
+* = "expr(not is_granted('ROLE_ADMIN'))"),
+* )
+*
+* @Hateoas\Relation(
+* "update",
+* href = @Hateoas\Route(
+* "updateBook",
+* parameters = { "id" = "expr(object.getId())" },
+* ),
+* exclusion = @Hateoas\Exclusion(groups="getBooks", excludeIf
+* = "expr(not is_granted('ROLE_ADMIN'))"),
+* )
+**/
+
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     #[Groups(["getBooks","getAuthors"])]
-    private $id;
+    private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 255)]
+    #[ORM\Column(length: 255)]
     #[Groups(["getBooks","getAuthors"])]
-    #[Assert\NotBlank(message: "Le titre du livre est obligatoire")]
-    #[Assert\Length(min:1, max:255, minMessage:"Le titre doit faire au moins {{limit}} caractères",
-     maxMessage:"Le titre ne peut pas faire plus de {{ limit }} caractères")]
-    private $title;
-    
-    #[ORM\Column(type: 'text', nullable: true)]
-    #[Groups(["getBooks","getAuthors"])]
-    private $coverText;
+    #[Assert\NotBlank(message:"Le titre du livre est obligatoire")]
+    #[Assert\Length(min:1,max:255,minMessage:"Le titre doit faire au moins {{limit}} caractères",maxMessage:"Le titre ne peut pas dépasser {{limit}} caractères")]
+    private ?string $title = null;
 
-    #[ORM\ManyToOne(targetEntity: Author::class, inversedBy:'Books')]
+    #[ORM\Column(type: Types::TEXT, nullable:true)]
+    #[Groups(["getBooks","getAuthors"])]
+    private ?string $coverText;
+
+    #[ORM\ManyToOne(inversedBy: 'books')]
     #[Groups(["getBooks"])]
-    private $author;
+    private ?Author $author = null;
 
     public function getId(): ?int
     {

@@ -6,36 +6,31 @@ use App\Repository\AuthorRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Serializer\Annotation\Groups;
+use JMS\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-
 
 #[ORM\Entity(repositoryClass: AuthorRepository::class)]
 class Author
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     #[Groups(["getBooks","getAuthors"])]
-    private $id;
+    private ?int $id = null;
 
-    #[ORM\Column(type: 'string',length: 255, nullable: true)]
+    #[ORM\Column(length: 255)]
     #[Groups(["getBooks","getAuthors"])]
-    #[Assert\NotBlank(message: "Le Prénom de l'auteur est obligatoire")]
-    #[Assert\Length(min:1, max:255, minMessage:"Le prénom doit faire au moins {{limit}} caractères",
-     maxMessage:"Le prénom ne peut pas faire plus de {{ limit }} caractères")]
-    private $firstName;
+    #[Assert\NotBlank(message:"Le prénom est obligatoire")]
+    private ?string $firstName = null;
 
-    #[ORM\Column(type: 'string',length: 255)]
+    #[ORM\Column(length: 255)]
     #[Groups(["getBooks","getAuthors"])]
-    #[Assert\NotBlank(message: "Le nom de l'auteur  est obligatoire")]
-    #[Assert\Length(min:1, max:255, minMessage:"Le nom doit faire au moins {{limit}} caractères",
-     maxMessage:"Le nom ne peut pas faire plus de {{ limit }} caractères")]
-    private $lastName;
+    #[Assert\NotBlank(message:"Le nom est obligatoire")]
+    private ?string $lastName = null;
 
     #[ORM\OneToMany(mappedBy: 'author', targetEntity: Book::class)]
     #[Groups(["getAuthors"])]
-    private $books;
+    private Collection $books;
 
     public function __construct()
     {

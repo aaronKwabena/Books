@@ -5,49 +5,51 @@ namespace App\Controller;
 use App\Entity\Author;
 use App\Repository\AuthorRepository;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Contracts\Cache\TagAwareCacheInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 class AuthorController extends AbstractController
-{ 
-    #[Route('/authors', name: 'app_author', methods:['GET'])]
-    public function getAllAuthors(SerializerInterface $serializer,Request $request,AuthorRepository $authorRepository,TagAwareCacheInterface $cache): JsonResponse 
+{
+    #[Route('/authors', name: 'app_author',methods:['GET'])]
+    public function getAllAuthor(
+        SerializerInterface $serializer,
+        AuthorRepository $authorRepository,
+        Request $request,
+        TagAwareCacheInterface $cachePool): JsonResponse
     {
-        $page = $request->get('page', 1);
-        $limit = $request->get('limit', 3);
-    
-        $idCache = "getAllAuthors-" . $page . "-" . $limit;
-    
-        $jsonAuthorList = $cache->get($idCache, function (ItemInterface $item) use ($authorRepository,$page,$limit,$serializer) 
-        {
-            $item->tag("authorsCache");
-            $authorList = $authorRepository->findAllWithPagination($page, $limit);
-    
-            return $serializer->serialize($authorList, 'json', ['groups' => 'getAuthors']);
-        });
-    
-        return new JsonResponse($jsonAuthorList, Response::HTTP_OK, [
-            'Content-Type' => 'application/json'
-        ], true);
-    }
-    
+        $page = $request->get('page',1);
+        $limit = $request->get('limit',3);
 
-        #[Route('/api/author/{id}',name:"detailAuthor",methods:['GET'])]
-    public function getDetailBook(Author $author,SerializerInterface $serializer):JsonResponse{
+        $idCache = "getAllAuthors-".$page."-".$limit;
+
+        $jsonAuthorList = $cachePool->get($idCache,function(ItemInterface $item) use ($authorRepository,$page,$limit,$serializer){
+            $item->tag("authorsCache");
+            $authorList = $authorRepository->findAllWithPagination($page,$limit);
+
+            return $serializer->serialize($authorList,'json',['groups'=>'getAuthors']);
+
+        });
+
+        return new JsonResponse($jsonAuthorList, Response::HTTP_OK,['accept'=>'json'],true);
+            
+    }
+
+     #[Route('/api/author/{id}',name:"detailAuthor",methods:['GET'])]
+    public function getDetailAuthor(Author $author,SerializerInterface $serializer):JsonResponse{
 
         $jsonAuthor = $serializer->serialize($author,'json',['groups'=>'getAuthors']);
         return new JsonResponse($jsonAuthor, Response::HTTP_OK,['accept'=>'json'],true);
     }
-     
+
     #[Route('/api/authors/{id}',name:'deleteAuthor',methods:['DELETE'])]
     public function deleteAuthor(Author $author, EntityManagerInterface $manager):JsonResponse{
 
@@ -58,19 +60,22 @@ class AuthorController extends AbstractController
     }
 
     #[Route('/api/authors',name:"createAuthor",methods:['POST'])]
-    public function createAuthor(SerializerInterface $serializer,Request $request,EntityManagerInterface $manager,
-    UrlGeneratorInterface $urlGenerator, AuthorRepository $authorRepository,ValidatorInterface $validator):JsonResponse{
+    public function createAuthor(
+        SerializerInterface $serializer,
+        Request $request,
+        EntityManagerInterface $manager,
+        UrlGeneratorInterface $urlGenerator, 
+        ValidatorInterface $validator):JsonResponse{
 
         //création variable author et on vient deserialiser le contenu de author
         $author = $serializer->deserialize($request->getContent(),Author::class,'json');       
 
-         // On vérifie les erreurs
-         $errors = $validator->validate($author);
-
-         if ($errors->count() > 0) {
-             return new JsonResponse($serializer->serialize($errors,'json'),JsonResponse::HTTP_BAD_REQUEST, [], true);
-         }
-
+        //On vérifie les erreurs
+        $errors = $validator->validate($author);
+        if($errors->count()>0){
+            return new JsonResponse($serializer->serialize($errors,'json'),JsonResponse::HTTP_BAD_REQUEST,[],true);
+        }
+        
         //on garde les données dans notre seau
         $manager->persist($author);
         //on expédie
@@ -93,55 +98,5 @@ class AuthorController extends AbstractController
 
        return new JsonResponse(null,JsonResponse::HTTP_NO_CONTENT);
 
-        return new JsonResponse();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // #[Route('/', name: 'get_authors', methods: ['GET'])]
-    // public function getAuthors(EntityManagerInterface $entityManager): JsonResponse
-    // {
-    //     $query = $entityManager->createQuery('
-    //         SELECT author, books
-    //         FROM App\Entity\Author author
-    //         LEFT JOIN author.books books
-    //     ');
-
-    //     $authors = $query->getResult();
-
-    //     // Formattez les résultats en tableau pour l'affichage
-    //     $formattedAuthors = [];
-    //     foreach ($authors as $author) {
-    //         $formattedBooks = [];
-    //         foreach ($author->getBooks() as $book) {
-    //             $formattedBooks[] = [
-    //                 'id' => $book->getId(),
-    //                 'title' => $book->getTitle(),
-    //                 'cover_text' => $book->getCoverText(),
-    //             ];
-    //         }
-
-    //         $formattedAuthors[] = [
-    //             'id' => $author->getId(),
-    //             'firstName' => $author->getFirstName(),
-    //             'lastName' => $author->getLastName(),
-    //             'books' => $formattedBooks,
-    //         ];
-    //     }
-
-    //     return new JsonResponse($formattedAuthors);
-    // }
 }

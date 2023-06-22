@@ -29,6 +29,7 @@ class AppFixtures extends Fixture
         $user->setPassword($this->userPasswordHasher->hashPassword($user,"password"));
        
         $manager->persist($user);
+
         // Création d'un user admin
         $userAdmin = new User();
         $userAdmin->setEmail("admin@bookapi.com");
@@ -37,6 +38,7 @@ class AppFixtures extends Fixture
         $userAdmin->setPassword($this->userPasswordHasher->hashPassword($userAdmin, "password"));
 
         $manager->persist($userAdmin);
+        
         // Création des auteurs.
         $listAuthor = [];
             for ($i = 0; $i < 10; $i++) {
