@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\BookRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\BookRepository;
+use JMS\Serializer\Annotation\Since;
 use JMS\Serializer\Annotation\Groups;
 use Hateoas\Configuration\Annotation as Hateoas;
 use Symfony\Component\Validator\Constraints as Assert;
+
 
 /**
 * @Hateoas\Relation(
@@ -61,6 +63,11 @@ class Book
     #[Groups(["getBooks"])]
     private ?Author $author = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Groups(["getBooks"])]
+    #[Since("2.0")] 
+    private $comment;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -98,6 +105,18 @@ class Book
     public function setAuthor(?Author $author): static
     {
         $this->author = $author;
+
+        return $this;
+    }
+
+    public function getComment(): ?string
+    {
+        return $this->comment;
+    }
+
+    public function setComment(string $comment): static
+    {
+        $this->comment = $comment;
 
         return $this;
     }
